@@ -8,3 +8,5 @@ export { default as Login } from './Login';
 export { default as Register } from './Register';
 export { default as Checkout } from './Checkout';
 export { default as PageNotFound } from './PageNotFound';
+export {default as OrderHistory } from './OrderHistory';
+export {default as Wishlist } from './Wishlist';

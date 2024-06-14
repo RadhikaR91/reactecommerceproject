@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams ,useNavigate } from "react-router-dom";
 import Marquee from "react-fast-marquee";
-import { useDispatch } from "react-redux";
-import { addCart } from "../redux/action";
-
+import { useDispatch ,useSelector } from "react-redux";
+import { addCart, addWishlistItem, removeWishlistItem } from "../redux/action";
+import awsApiConfig from '../services/aws-api';
+import { useAuth } from "../context/AuthContext";
 import { Footer, Navbar } from "../components";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 
 const Product = () => {
   const { id } = useParams();
@@ -13,6 +17,8 @@ const Product = () => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loading2, setLoading2] = useState(false);
+  const { user, userAttributes } = useAuth();
+  const navigate = useNavigate();
 
   const dispatch = useDispatch();
 
@@ -20,17 +26,46 @@ const Product = () => {
     dispatch(addCart(product));
   };
 
+  const stateOfwish = useSelector(state => state.wishlist);
+  const userWishlist = stateOfwish.wishlists[userAttributes.email] || [];
+
+  const addProductToWishlist = (product) => {
+    if (user) {
+      dispatch(addWishlistItem(userAttributes.email, product));
+    } else {
+      alert("Please log in to add items from your wishlist.");
+      navigate('/login');
+    }
+  }
+
+  const removeProductFromWishlist = (product) => {
+    if (user) {
+      dispatch(removeWishlistItem(userAttributes.email, product));
+    } else {
+      alert("Please log in to remove items from your wishlist.");
+      navigate('/login');
+    }
+  };
+
   useEffect(() => {
+    window.scrollTo(0, 0);
     const getProduct = async () => {
       setLoading(true);
       setLoading2(true);
-      const response = await fetch(`https://dwiifs4cia.execute-api.us-east-1.amazonaws.com/Dev/product/${id}`);
+      const response = await fetch(`https://dwiifs4cia.execute-api.us-east-1.amazonaws.com/Prod/product/${id}`, {
+        headers: {
+          'x-api-key': awsApiConfig.apiKey
+        }
+      });
       const data = await response.json();
       setProduct(data);
       setLoading(false);
       const response2 = await fetch(
-        `https://dwiifs4cia.execute-api.us-east-1.amazonaws.com/Dev/product/category/${data.category}`
-      );
+        `https://dwiifs4cia.execute-api.us-east-1.amazonaws.com/Prod/product/category/${data.category}`, {
+          headers: {
+            'x-api-key': awsApiConfig.apiKey
+          }
+        });
 
       const data2 = await response2.json();
       setSimilarProducts(data2);
@@ -62,9 +97,11 @@ const Product = () => {
     );
   };
 
+  const isProductInWishlist = userWishlist.find(item => item.id === product.id);
   const ShowProduct = () => {
     return (
       <>
+       
         <div className="container my-5 py-2">
           <div className="row">
             <div className="col-md-6 col-sm-12 py-3">
@@ -94,6 +131,18 @@ const Product = () => {
               <Link to="/cart" className="btn btn-dark mx-3">
                 Go to Cart
               </Link>
+              <button className="btn btn-dark m-1" onClick={() => {
+                    if (!isProductInWishlist) {
+                      addProductToWishlist(product)
+                    } else {
+                      removeProductFromWishlist(product)
+                    }
+                  }}>
+                    <FontAwesomeIcon
+                      icon={isProductInWishlist ? faHeartSolid : faHeartRegular}
+                      style={{ color: isProductInWishlist ? 'red' : 'gray' }}
+                    />
+                  </button>
             </div>
           </div>
         </div>
@@ -130,8 +179,10 @@ const Product = () => {
         <div className="py-4 my-4">
           <div className="d-flex">
             {similarProducts.map((item) => {
+              const isProductInWishlist = userWishlist.find(x => x.id === item.id);
               return (
                 <div key={item.id} className="card mx-4 text-center">
+                  <Link to={"/product/" + item.id}>
                   <img
                     className="card-img-top p-3"
                     src={item.image}
@@ -139,6 +190,7 @@ const Product = () => {
                     height={300}
                     width={300}
                   />
+                  </Link>
                   <div className="card-body">
                     <h5 className="card-title">
                       {item.title.substring(0, 15)}...
@@ -152,7 +204,7 @@ const Product = () => {
                       to={"/product/" + item.id}
                       className="btn btn-dark m-1"
                     >
-                      Buy Now
+                      View Details
                     </Link>
                     <button
                       className="btn btn-dark m-1"
@@ -160,6 +212,18 @@ const Product = () => {
                     >
                       Add to Cart
                     </button>
+                    <button className="btn btn-dark m-1" onClick={() => {
+                    if (!isProductInWishlist) {
+                      addProductToWishlist(item)
+                    } else {
+                      removeProductFromWishlist(item)
+                    }
+                  }}>
+                    <FontAwesomeIcon
+                      icon={isProductInWishlist ? faHeartSolid : faHeartRegular}
+                      style={{ color: isProductInWishlist ? 'red' : 'gray' }}
+                    />
+                  </button>
                   </div>
                 </div>
               );

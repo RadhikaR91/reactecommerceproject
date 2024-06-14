@@ -1,30 +1,6 @@
 import { CognitoUser, AuthenticationDetails, CognitoUserAttribute } from 'amazon-cognito-identity-js';
 import UserPool from '../aws-config';
 
-// export const signIn = (username, password) => {
-//     const user = new CognitoUser({
-//         Username: username,
-//         Pool: UserPool
-//     });
-
-//     const authDetails = new AuthenticationDetails({
-//         Username: username,
-//         Password: password
-//     });
-
-//     return new Promise((resolve, reject) => {
-//         user.authenticateUser(authDetails, {
-//             onSuccess: (data) => {
-//                 console.log("Login success", data);
-//                 resolve(data);
-//             },
-//             onFailure: (err) => {
-//                 console.log("Login failed", err.message);
-//                 reject(err);
-//             },
-//         });
-//     });
-// };
 export const signIn = (username, password) => {
     const user = new CognitoUser({
         Username: username,
@@ -40,6 +16,7 @@ export const signIn = (username, password) => {
         user.authenticateUser(authDetails, {
             onSuccess: (data) => {
                 console.log("Login success", data);
+                const idToken = data.getIdToken().getJwtToken();
                 user.getUserAttributes((err, attributes) => {
                     if (err) {
                         reject(err);
@@ -48,7 +25,7 @@ export const signIn = (username, password) => {
                         attributes.forEach(attr => {
                             userAttributes[attr.Name] = attr.Value;
                         });
-                        resolve({ data, userAttributes });
+                        resolve({ data, userAttributes, idToken });
                     }
                 });
             },
@@ -62,7 +39,8 @@ export const signIn = (username, password) => {
 
 export const signUp = (name, email, password) => {
     const attributeList = [
-        new CognitoUserAttribute({ Name: 'name', Value: name })
+        new CognitoUserAttribute({ Name: 'name', Value: name }),
+        new CognitoUserAttribute({ Name: 'email', Value: email })
         // You can add more attributes here if needed
     ];
 
@@ -104,3 +82,22 @@ export const signOut = () => {
         cognitoUser.signOut();
     }
 };
+
+export const getToken = () => {
+    const cognitoUser = UserPool.getCurrentUser();
+    if (!cognitoUser) {
+        throw new Error('No user is currently logged in.');
+    }
+
+    return new Promise((resolve, reject) => {
+        cognitoUser.getSession((err, session) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(session.getIdToken().getJwtToken());
+            }
+        });
+    });
+}
+
+

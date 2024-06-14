@@ -6,6 +6,9 @@ import { useAuth } from '../context/AuthContext';
 const Navbar = () => {
     const { user, userAttributes, logout } = useAuth();
     const state = useSelector(state => state.handleCart)
+    const stateOfwish = useSelector(state => state.wishlist);
+    const userWishlist = stateOfwish.wishlists[userAttributes.email] || [];
+    
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light py-3 sticky-top">
             <div className="container">
@@ -36,6 +39,12 @@ const Navbar = () => {
                                 <button className="btn btn-outline-dark m-2" onClick={logout}>
                                     <i className="fa fa-sign-out-alt mr-1"></i> Logout
                                 </button>
+                                <NavLink to="/orderhistory" className="btn btn-outline-dark m-2">
+                                    <i></i> OrderHistory
+                                </NavLink>
+                                <NavLink to="/wishlist" className="btn btn-outline-dark m-2">
+                                    <i className="fa fa-cart-shopping mr-1"></i> Wishlist ({userWishlist.length})
+                                </NavLink>
                             </>
                         ) : (
                             <>

@@ -1,9 +1,85 @@
 import React from "react";
 import { Footer, Navbar } from "../components";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { useAuth } from '../context/AuthContext';
+import { clearCart } from "../redux/action";
+import { getToken } from "../services/authService";
+
+
+const OrderSuccess = () => {
+  return (
+    <div className="container my-5 py-5 text-center">
+      <h1>Thank you for your order!</h1>
+      <p>Your order has been placed successfully.</p>
+      <Link to="/" className="btn btn-primary">Go to Home</Link>
+    </div>
+  );
+};
+
+
 const Checkout = () => {
   const state = useSelector((state) => state.handleCart);
+  const { userAttributes } = useAuth();
+  const dispatch = useDispatch();
+  const { register, handleSubmit, formState: { errors }, reset } = useForm();
+  const [orderPlaced, setOrderPlaced] = React.useState(false);
+
+  console.log(userAttributes.email);
+  const onSubmit = async (data) => {
+
+    let subtotal = 0;
+    let shipping = 30;
+    let totalItems = 0;
+    state.map((item) => {
+      subtotal += Number(item.price) * item.qty;
+      totalItems += item.qty;
+      return null;
+    });
+
+    // Prepare order data
+    const totalAmount = subtotal + shipping;
+    const orderDetails = {
+      customer_name: `${data.firstName} ${data.lastName}`,
+      email: userAttributes.email,
+      items: state.map(item => ({
+        product_id: item.id,
+        quantity: item.qty,
+        image: item.image,
+        total_price: Number(item.price) * item.qty,
+        title: item.title
+      })),
+      total_items: totalItems,
+      subtotal: subtotal,
+      total_amount: totalAmount
+    };
+
+    const token = await getToken();
+    console.log("Token" ,token);
+    try {
+      const response = await fetch('https://i7uzvh22n7.execute-api.us-east-1.amazonaws.com/Test/putOrders', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
+        body: JSON.stringify(orderDetails),
+      });
+
+      if (response.ok) {
+        reset();
+        console.log(response);
+        dispatch(clearCart());
+        setOrderPlaced(true);
+      } else {
+        alert("Failed to process the order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error placing order", error);
+      alert("There was an error placing your order. Please try again.");
+    }
+  };
 
   const EmptyCart = () => {
     return (
@@ -67,7 +143,7 @@ const Checkout = () => {
                   <h4 className="mb-0">Billing address</h4>
                 </div>
                 <div className="card-body">
-                  <form className="needs-validation" novalidate>
+                  <form onSubmit={handleSubmit(onSubmit)} className="needs-validation" novalidate>
                     <div className="row g-3">
                       <div className="col-sm-6 my-1">
                         <label for="firstName" className="form-label">
@@ -77,12 +153,11 @@ const Checkout = () => {
                           type="text"
                           className="form-control"
                           id="firstName"
-                          placeholder=""
-                          required
+                          {...register("firstName", { required: true })}
                         />
-                        <div className="invalid-feedback">
+                        {errors.firstName && <div className="invalid-feedback">
                           Valid first name is required.
-                        </div>
+                        </div>}
                       </div>
 
                       <div className="col-sm-6 my-1">
@@ -93,12 +168,11 @@ const Checkout = () => {
                           type="text"
                           className="form-control"
                           id="lastName"
-                          placeholder=""
-                          required
+                          {...register("lastName", { required: true })}
                         />
-                        <div className="invalid-feedback">
+                        {errors.lastName && <div className="invalid-feedback">
                           Valid last name is required.
-                        </div>
+                        </div>}
                       </div>
 
                       <div className="col-12 my-1">
@@ -110,12 +184,12 @@ const Checkout = () => {
                           className="form-control"
                           id="email"
                           placeholder="you@example.com"
-                          required
+                          {...register("email", { required: true })}
                         />
-                        <div className="invalid-feedback">
+                        {errors.email && <div className="invalid-feedback">
                           Please enter a valid email address for shipping
                           updates.
-                        </div>
+                        </div>}
                       </div>
 
                       <div className="col-12 my-1">
@@ -144,6 +218,7 @@ const Checkout = () => {
                           className="form-control"
                           id="address2"
                           placeholder="Apartment or suite"
+
                         />
                       </div>
 
@@ -152,7 +227,9 @@ const Checkout = () => {
                           Country
                         </label>
                         <br />
-                        <select className="form-select" id="country" required>
+                        <select className="form-select" id="country"
+
+                          required>
                           <option value="">Choose...</option>
                           <option>India</option>
                         </select>
@@ -166,7 +243,9 @@ const Checkout = () => {
                           State
                         </label>
                         <br />
-                        <select className="form-select" id="state" required>
+                        <select className="form-select" id="state"
+
+                          required>
                           <option value="">Choose...</option>
                           <option>Punjab</option>
                         </select>
@@ -184,6 +263,7 @@ const Checkout = () => {
                           className="form-control"
                           id="zip"
                           placeholder=""
+
                           required
                         />
                         <div className="invalid-feedback">
@@ -269,7 +349,7 @@ const Checkout = () => {
 
                     <button
                       className="w-100 btn btn-primary "
-                      type="submit" disabled
+                      type="submit"
                     >
                       Continue to checkout
                     </button>
@@ -286,9 +366,7 @@ const Checkout = () => {
     <>
       <Navbar />
       <div className="container my-3 py-3">
-        <h1 className="text-center">Checkout</h1>
-        <hr />
-        {state.length ? <ShowCheckout /> : <EmptyCart />}
+        {orderPlaced ? <OrderSuccess /> : (state.length === 0 ? <EmptyCart /> : <ShowCheckout />)}
       </div>
       <Footer />
     </>
