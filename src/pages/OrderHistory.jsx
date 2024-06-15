@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Footer, Navbar } from "../components";
-import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { getToken } from "../services/authService";
