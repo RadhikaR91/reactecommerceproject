@@ -6,16 +6,17 @@ import { useAuth } from '../context/AuthContext';
 import { getToken } from "../services/authService";
 
 
-
 const OrderHistory = () => {
     const [orders, setOrders] = useState([]);
     const { userAttributes } = useAuth();
+    const [loading, setLoading] = useState(false);
     const userEmail = userAttributes.email;
 
 
     useEffect(() => {
         const fetchOrders = async () => {
             if (!userEmail) return;
+            setLoading(true);
             const token = await getToken();
 
             try {
@@ -31,10 +32,11 @@ const OrderHistory = () => {
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-                console.log(data);
                 setOrders(data);
             } catch (error) {
                 console.error('Error fetching order history:', error);
+            }finally {
+                setLoading(false);
             }
         };
 
@@ -69,7 +71,7 @@ const OrderHistory = () => {
                         <h6 className="mb-0">Order ID: {order.orderId}</h6>
                     </div>
                     <div>
-                        <h6 className="text-end">Order Date : {order.createdAt}</h6>
+                        <h6 className="text-end">Order Date : {formatDate(order.createdAt)}</h6>
                     </div>
                 </div>
                 <div className="card-body">
@@ -97,13 +99,21 @@ const OrderHistory = () => {
         ));
     };
 
+    // Function to format date from timestamp
+    const formatDate = (timestamp) => {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString(); // Adjust date formatting as needed
+    };
+
     return (
         <>
             <Navbar />
             <div className="container my-3 py-3">
                 <h1 className="text-center">Order History</h1>
                 <hr />
-                {orders.length > 0 ? (
+                {loading ? (
+                    <p>Loading...</p>
+                ) : orders.length > 0 ? (
                     renderOrders()
                 ) : (
                     <div className="text-center">

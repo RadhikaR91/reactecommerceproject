@@ -14,6 +14,8 @@ const Products = () => {
   const [data, setData] = useState([]);
   const [filter, setFilter] = useState(data);
   const [loading, setLoading] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [isFiltered, setIsFiltered] = useState(false);
   const { user, userAttributes } = useAuth();
   const navigate = useNavigate();
   let componentMounted = true;
@@ -30,7 +32,7 @@ const Products = () => {
     if (user) {
       dispatch(addWishlistItem(userAttributes.email, product));
     } else {
-      alert("Please log in to add items from your wishlist.");
+      alert("Please log in to add items to your wishlist.");
       navigate('/login');
     }
   }
@@ -98,6 +100,23 @@ const Products = () => {
     );
   };
 
+  const toggleProductSelection = (product) => {
+    setSelectedProducts((prevSelected) => {
+      if (prevSelected.includes(product)) {
+        return prevSelected.filter((p) => p !== product);
+      } else {
+        if (prevSelected.length < 3) {
+          return [...prevSelected, product];
+        }
+        return prevSelected;
+      }
+    });
+  };
+
+  const navigateToComparePage = () => {
+    navigate("/compare", { state: { selectedProducts } });
+  };
+
   const filterProduct = (cat) => {
     const updatedList = data.filter((item) => item.category === cat);
     setFilter(updatedList);
@@ -108,19 +127,37 @@ const Products = () => {
     return (
       <>
         <div className="buttons text-center py-5">
-          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => setFilter(data)}>All</button>
-          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => filterProduct("men's clothing")}>Men's Clothing</button>
-          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => filterProduct("women's clothing")}>
-            Women's Clothing
-          </button>
-          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => filterProduct("jewelery")}>Jewelery</button>
-          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => filterProduct("electronics")}>Electronics</button>
+          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => {
+            setFilter(data);
+            setIsFiltered(false);
+            setSelectedProducts([]); // Clear selected products
+          }}>All</button>
+          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => {
+            filterProduct("men's clothing");
+            setIsFiltered(true);
+            setSelectedProducts([]); // Clear selected products when filter changes
+          }}>Men's Clothing</button>
+          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => {
+            filterProduct("women's clothing");
+            setIsFiltered(true);
+            setSelectedProducts([]); // Clear selected products when filter changes
+          }}>Women's Clothing</button>
+          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => {
+            filterProduct("jewelery");
+            setIsFiltered(true);
+            setSelectedProducts([]); // Clear selected products when filter changes
+          }}>Jewelery</button>
+          <button className="btn btn-outline-dark btn-sm m-2" onClick={() => {
+            filterProduct("electronics");
+            setIsFiltered(true);
+            setSelectedProducts([]); // Clear selected products when filter changes
+          }}>Electronics</button>
         </div>
 
 
 
         {filter.map((product) => {
-          
+
           const isProductInWishlist = userWishlist.find(item => item.id === product.id);
 
           return (
@@ -166,6 +203,17 @@ const Products = () => {
                       style={{ color: isProductInWishlist ? 'red' : 'gray' }}
                     />
                   </button>
+                  {isFiltered && (
+                  <div className="form-check mt-2">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      checked={selectedProducts.includes(product)}
+                      onChange={() => toggleProductSelection(product)}
+                    />
+                    <label className="form-check-label">Compare</label>
+                  </div>
+                )}
                 </div>
               </div>
             </div>
@@ -184,12 +232,16 @@ const Products = () => {
             <hr />
           </div>
         </div>
-        {/* <div className="row justify-content-center">
-          {loading || wishlistLoading ? <Loading /> : <ShowProducts />}
-        </div> */}
         <div className="row justify-content-center">
           {loading ? <Loading /> : <ShowProducts />}
         </div>
+        {selectedProducts.length > 0 && isFiltered && (
+        <div className="text-center mt-4">
+          <button className="btn btn-dark" onClick={navigateToComparePage}>
+            Compare Selected Products
+          </button>
+        </div>
+      )}
       </div>
     </>
   );

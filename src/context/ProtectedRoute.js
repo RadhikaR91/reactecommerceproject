@@ -5,7 +5,7 @@ const ProtectedRoute = ({ children }) => {
     const { user } = useAuth();
     
     if (user == null) {
-        alert("Login to continue")
+        alert("Please login to continue.")
         return <Navigate to="/login" />;
     }
 

@@ -41,13 +41,13 @@ const Wishlist = () => {
                                 {userWishlist.map(item => (
                                     <tr key={item.id}>
                                         <td>
-                                        <Link to={"/product/" + item.id}>
-                                            <img
-                                                src={item.image}
-                                                alt={item.title}
-                                                width={100}
-                                                height={75}
-                                            />
+                                            <Link to={"/product/" + item.id}>
+                                                <img
+                                                    src={item.image}
+                                                    alt={item.title}
+                                                    width={100}
+                                                    height={75}
+                                                />
                                             </Link>
                                         </td>
                                         <td>{item.title}</td>
