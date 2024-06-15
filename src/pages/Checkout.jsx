@@ -56,7 +56,7 @@ const Checkout = () => {
     };
 
     const token = await getToken();
-    console.log("Token" ,token);
+    console.log("Token", token);
     try {
       const response = await fetch('https://i7uzvh22n7.execute-api.us-east-1.amazonaws.com/Test/putOrders', {
         method: "POST",
@@ -201,7 +201,7 @@ const Checkout = () => {
                           className="form-control"
                           id="address"
                           placeholder="1234 Main St"
-                          required
+
                         />
                         <div className="invalid-feedback">
                           Please enter your shipping address.
@@ -231,7 +231,7 @@ const Checkout = () => {
 
                           required>
                           <option value="">Choose...</option>
-                          <option>India</option>
+                          <option>USA</option>
                         </select>
                         <div className="invalid-feedback">
                           Please select a valid country.
@@ -247,7 +247,10 @@ const Checkout = () => {
 
                           required>
                           <option value="">Choose...</option>
-                          <option>Punjab</option>
+                          <option>California</option>
+                          <option>Kentucky</option>
+                          <option>Ohio</option>
+                          <option>Texas</option>
                         </select>
                         <div className="invalid-feedback">
                           Please provide a valid state.
